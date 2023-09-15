@@ -1,0 +1,60 @@
+#!/usr/bin/env sh
+
+set -e
+test -n "$DEBUG" && set -x
+
+for CMD in git jq envsubst; do
+  if ! command -v "$CMD" 1>/dev/null 2>&1; then
+    echo "Could not find $CMD executable" 1>&2
+    exit 69
+  fi
+done
+
+FLAKE_NIX_TEMPLATE="$1"
+FLAKE_NIX_OUTPUT="$2"
+TMP_FLAKE_NIX=/tmp/c1def4b5-5bed-4437-b419-9b7c52efc467
+
+cleanup() {
+  rm -f "$TMP_FLAKE_NIX"
+}
+
+trap cleanup SIGINT SIGTERM
+
+MAIN_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+mk_flake_nix() {
+  CHANNEL="$1"
+  VERSION="$2"
+
+  CHANNEL="$CHANNEL" \
+  VERSION="$VERSION" \
+  envsubst < "$FLAKE_NIX_TEMPLATE" > "$TMP_FLAKE_NIX"
+
+  if [ "$VERSION" = latest ]; then
+    BRANCH="$CHANNEL"
+  else
+    BRANCH="$VERSION"
+  fi
+
+  if git rev-parse --verify "$BRANCH" 1>/dev/null 2>&1; then
+    git switch "$BRANCH"
+  else
+    git switch --orphan "$BRANCH"
+  fi
+
+  mv "$TMP_FLAKE_NIX" "$FLAKE_NIX_OUTPUT"
+
+  if [ -n "$(git status --porcelain)" ]; then
+    git add "$FLAKE_NIX_OUTPUT"
+    git commit -m "flake.nix: Update"
+    git push origin "$BRANCH"
+  fi
+
+  git switch "$MAIN_BRANCH" 1>/dev/null
+}
+
+jq -r '.[] | "\(.channel) \(.version)"' | while read -r VERSION_INFO; do
+  mk_flake_nix $VERSION_INFO
+done
+
+cleanup

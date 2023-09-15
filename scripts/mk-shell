@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+
+set -e
+test -n "$DEBUG" && set -x
+
+FLAKE_NIX_TEMPLATE="$1"
+FLAKE_DIR=/tmp/103915a9-eeb9-476f-9366-c9c5b42528e6
+
+mkdir -p "$FLAKE_DIR"
+
+cleanup() {
+  rm -rf "$FLAKE_DIR"
+}
+
+trap cleanup SIGINT SIGTERM
+
+CHANNEL=stable \
+VERSION=latest \
+envsubst < "$FLAKE_NIX_TEMPLATE" > "$FLAKE_DIR/flake.nix"
+
+nix develop "path://$FLAKE_DIR"
+
+cleanup

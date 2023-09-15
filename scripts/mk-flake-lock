@@ -1,0 +1,62 @@
+#!/usr/bin/env sh
+
+set -e
+test -n "$DEBUG" && set -x
+
+for CMD in git nix jq; do
+  if ! command -v "$CMD" 1>/dev/null 2>&1; then
+    echo "Could not find $CMD executable" 1>&2
+    exit 69
+  fi
+done
+
+MAIN_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+git switch stable
+nix flake update --commit-lock-file
+
+COMMIT="$(git log --format=format:%H origin/stable..)"
+
+if [ -z "$COMMIT" ]; then
+  COMMIT="$(git log --grep='^flake.lock:' --format=format:%H HEAD)"
+else
+  git push origin stable
+fi
+
+git switch "$MAIN_BRANCH" 1>/dev/null
+
+if [ -z "$COMMIT" ]; then
+  echo "Nothing to do"
+  exit 0
+fi
+
+if [ "$(echo "$COMMIT" | wc -l)" -gt 1 ]; then
+  echo "More than one commit found on local branch" 1>&2
+  exit 1
+fi
+
+apply_commit() {
+  CHANNEL="$1"
+  VERSION="$2"
+
+  if [ "$VERSION" = latest ]; then
+    BRANCH="$CHANNEL"
+  else
+    BRANCH="$VERSION"
+  fi
+
+  git switch "$BRANCH"
+
+  if ! git cherry-pick "$COMMIT"; then
+    git cherry-pick --quit
+    nix flake update --commit-lock-file
+  fi
+
+  git push origin "$BRANCH"
+
+  git switch "$MAIN_BRANCH" 1>/dev/null
+}
+
+jq -r '.[] | "\(.channel) \(.version)"' | while read -r VERSION_INFO; do
+  apply_commit $VERSION_INFO
+done
