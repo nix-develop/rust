@@ -1,0 +1,29 @@
+name: Update All
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  update-all:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: cachix/install-nix-action@v23
+      - run: |
+          nix --extra-experimental-features "nix-command flakes" shell \
+            nixpkgs#git \
+            nixpkgs#jq \
+            nixpkgs#envsubst
+          sh scripts/mk-version-list > /tmp/rust-versions.json
+          sh scripts/mk-flake-nix templates/flake.nix flake.nix < /tmp/rust-versions.json
+          sh scripts/mk-flake-lock < /tmp/rust-versions.json
