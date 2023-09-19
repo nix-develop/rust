@@ -22,7 +22,9 @@
             lld
             openssl
             pkg-config
-            rust-bin."${CHANNEL}"."${VERSION}".default
+            (rust-bin."${CHANNEL}"."${VERSION}".default.override {
+              extensions = [ "rust-src" ];
+            })
             cargo-make
           ];
         };
