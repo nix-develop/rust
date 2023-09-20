@@ -10,14 +10,16 @@ for CMD in git jq grep; do
   fi
 done
 
-TMP_REPO=/tmp/ed4d48ee-2fa3-4d1e-a796-613acd747554
+if [ -z "$OXALICA_RUST_OVERLAY" ]; then
+  OXALICA_RUST_OVERLAY=/tmp/ed4d48ee-2fa3-4d1e-a796-613acd747554
+fi
 
-if [ ! -d "$TMP_REPO" ]; then
-  git clone --depth=1 https://github.com/oxalica/rust-overlay.git "$TMP_REPO" 1>&2
+if [ ! -d "$OXALICA_RUST_OVERLAY" ]; then
+  git clone --depth=1 https://github.com/oxalica/rust-overlay.git "$OXALICA_RUST_OVERLAY" 1>&2
 fi
 
 cleanup() {
-  rm -rf "$TMP_REPO"
+  rm -rf "$OXALICA_RUST_OVERLAY"
 }
 
 trap cleanup INT TERM
@@ -37,7 +39,7 @@ add_version stable latest
 add_version beta latest
 add_version nightly latest
 
-for FILE in "$TMP_REPO/manifests/stable"/*; do
+for FILE in "$OXALICA_RUST_OVERLAY/manifests/stable"/*; do
   VERSION="$(basename "$FILE" .nix)"
 
   if [ "$(echo "$VERSION" | grep -Ec "^[0-9]+\.[0-9]+\.[0-9]+$")" -eq 0 ]; then
