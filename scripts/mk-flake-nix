@@ -18,7 +18,7 @@ cleanup() {
   rm -f "$TMP_FLAKE_NIX"
 }
 
-trap cleanup SIGINT SIGTERM
+trap cleanup INT TERM
 
 MAIN_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 

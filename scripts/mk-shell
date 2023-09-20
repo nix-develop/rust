@@ -12,7 +12,7 @@ cleanup() {
   rm -rf "$FLAKE_DIR"
 }
 
-trap cleanup SIGINT SIGTERM
+trap cleanup INT TERM
 
 CHANNEL=stable \
 VERSION=latest \

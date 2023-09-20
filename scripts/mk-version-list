@@ -20,7 +20,7 @@ cleanup() {
   rm -rf "$TMP_REPO"
 }
 
-trap cleanup SIGINT SIGTERM
+trap cleanup INT TERM
 
 VERSION_LIST='[]'
 
