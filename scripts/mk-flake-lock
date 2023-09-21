@@ -12,7 +12,9 @@ done
 
 MAIN_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
+git fetch
 git switch stable
+git pull --rebase origin stable
 nix flake update --commit-lock-file
 
 COMMIT="$(git log --format=format:%H origin/stable..)"
@@ -46,9 +48,11 @@ apply_commit() {
   fi
 
   git switch "$BRANCH"
+  git pull --rebase origin "$BRANCH"
 
   if ! git cherry-pick "$COMMIT"; then
     git cherry-pick --quit
+    git reset --hard HEAD
     nix flake update --commit-lock-file
   fi
 
