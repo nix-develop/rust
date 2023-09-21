@@ -20,7 +20,7 @@ nix flake update --commit-lock-file
 COMMIT="$(git log --format=format:%H origin/stable..)"
 
 if [ -z "$COMMIT" ]; then
-  COMMIT="$(git log --grep='^flake.lock:' --format=format:%H HEAD)"
+  COMMIT="$(git log --grep='^flake.lock:' --format=format:%H HEAD~..)"
 else
   git push origin stable
 fi
