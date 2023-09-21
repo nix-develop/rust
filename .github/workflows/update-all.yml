@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
           path: nix-develop-rust
       - uses: actions/checkout@v4
         with:
@@ -30,6 +31,8 @@ jobs:
             nixpkgs#jq \
             nixpkgs#envsubst
           cd "$GITHUB_WORKSPACE/nix-develop-rust"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
           export OXALICA_RUST_OVERLAY="$GITHUB_WORKSPACE/rust-overlay"
           sh scripts/mk-version-list > /tmp/rust-versions.json
           sh scripts/mk-flake-nix templates/flake.nix flake.nix < /tmp/rust-versions.json
