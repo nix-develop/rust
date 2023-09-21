@@ -22,7 +22,9 @@
             lld
             openssl
             pkg-config
-            rust-bin."nightly"."latest".default
+            (rust-bin."nightly"."latest".default.override {
+              extensions = [ "rust-src" ];
+            })
             cargo-make
           ];
         };
